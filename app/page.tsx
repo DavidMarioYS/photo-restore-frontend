@@ -1,17 +1,23 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ReactCompareSlider, ReactCompareSliderImage } from "react-compare-slider";
-import { restorePhoto } from "@/lib/api"; // Impor fungsi API Gradio
+import { restorePhoto } from "@/lib/api";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   
   const [progress, setProgress] = useState(0);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
+
+  // Memastikan komponen slider dan halaman dimuat dengan aman di client-side
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -102,7 +108,7 @@ export default function Home() {
 
         {/* Area Tampilan Hasil & Tombol Unduh */}
         <div className="w-full flex flex-col items-center mt-8 space-y-4">
-          {result && preview ? (
+          {result && preview && isMounted ? (
             <>
               <div className="border border-gray-700 rounded-lg overflow-hidden shadow-2xl w-full">
                 <ReactCompareSlider

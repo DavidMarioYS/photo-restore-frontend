@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { ReactCompareSlider, ReactCompareSliderImage } from "react-compare-slider";
+import { restorePhoto } from "@/lib/api"; // Impor fungsi API Gradio
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -28,6 +29,7 @@ export default function Home() {
     setLoading(true);
     setProgress(0);
     
+    // Simulasi progress bar berjalan saat AI memproses
     progressInterval.current = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 95) return 95;
@@ -36,26 +38,20 @@ export default function Home() {
       });
     }, 1500);
 
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
-      const response = await fetch("http://127.0.0.1:8000/restore", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (response.ok) {
-        const blob = await response.blob();
-        setResult(URL.createObjectURL(blob));
+      // Memanggil API Hugging Face Gradio Client
+      const restoredImageUrl = await restorePhoto(file);
+      
+      if (restoredImageUrl) {
+        setResult(restoredImageUrl);
         setProgress(100);
       } else {
-        alert("Gagal memproses gambar. Periksa terminal backend Anda.");
+        alert("Gagal memproses gambar dari server AI.");
         setProgress(0);
       }
     } catch (error) {
       console.error(error);
-      alert("Pastikan server FastAPI berjalan di port 8000.");
+      alert("Terjadi kesalahan saat menghubungi server Hugging Face.");
       setProgress(0);
     } finally {
       if (progressInterval.current) clearInterval(progressInterval.current);
@@ -83,7 +79,7 @@ export default function Home() {
           {loading && (
             <div className="w-full space-y-2">
               <div className="flex justify-between text-sm text-gray-300 font-medium">
-                <span>Memproses dengan AI...</span>
+                <span>Memproses dengan AI (Hugging Face)...</span>
                 <span>{progress}%</span>
               </div>
               <div className="w-full bg-gray-700 rounded-full h-2.5 overflow-hidden">
@@ -121,6 +117,8 @@ export default function Home() {
               <a 
                 href={result} 
                 download="restored-photo.jpg"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="py-3 px-6 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-lg flex items-center gap-2"
               >
                 📥 Unduh Foto Hasil Restorasi
